@@ -1,0 +1,51 @@
+# Slotopol server with PostgreSQL database in docker.
+# Typical usage:
+#   docker compose -p slotopol-postgres -f "docker-compose.yml" up -d --build
+
+services:
+
+  slotopol:
+    image: schwarzlichtbezirk/slotopol:latest
+    container_name: slotopol-srv
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    networks:
+      slotopol-net:
+        aliases:
+          - slotopolhost
+    environment:
+      SLOTOPOL_DBDRIVER: postgres
+      SLOTOPOL_CLUBDSN: user=admin password=jB44t78dHv dbname=slotopol host=pghost sslmode=disable
+      SLOTOPOL_SPINDSN: user=admin password=jB44t78dHv dbname=slotopol host=pghost sslmode=disable
+    restart: unless-stopped
+    stop_signal: SIGINT
+    stop_grace_period: 15s
+
+  database:
+    image: postgres:16-alpine
+    container_name: slotopol-db
+    ports:
+      - 5432:5432
+    networks:
+      slotopol-net:
+        aliases:
+          - pghost
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: jB44t78dHv
+      POSTGRES_DB: slotopol
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d slotopol"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  slotopol-net:
+    name: slotopol-net
+    external: false
+    ipam:
+      driver: default

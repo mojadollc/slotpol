@@ -1,0 +1,46 @@
+//go:build !prod || full || playtech
+
+package deserttreasure
+
+import (
+	_ "embed"
+
+	"github.com/slotopol/server/game"
+	"github.com/slotopol/server/game/slot"
+)
+
+//go:embed deserttreasure_data.yaml
+var data []byte
+
+var Info = game.AlgInfo{
+	Aliases: []game.GameAlias{
+		{Prov: "Playtech", Name: "Desert Treasure", LNum: 9, Date: game.Date(2005, 11, 1)}, // see: https://www.slotsmate.com/software/playtech/playtech-desert-treasure
+	},
+	AlgDescr: game.AlgDescr{
+		GT: game.GTslot,
+		GP: game.GPlpay |
+			game.GPlsel |
+			game.GPfgseq |
+			game.GPfgmult |
+			game.GPfgreel |
+			game.GPscat |
+			game.GPwild,
+		SX: 5,
+		SY: 3,
+		SN: sn,
+		LN: len(BetLines),
+		BN: 0,
+	},
+	Update: func(ai *game.AlgInfo) {
+		ai.RTP = game.MakeRtpList(ReelsMap)
+		slot.MapSetPadding(ReelsMap, ai.SY)
+		ReelsBon.SetPadding(ai.SY)
+	},
+}
+
+func init() {
+	Info.SetupFactory(func(sel int) game.Gamble { return NewGame(sel) }, CalcStat)
+	game.DataRouter["playtech/deserttreasure/bon"] = &ReelsBon
+	game.DataRouter["playtech/deserttreasure/rmap"] = &ReelsMap
+	game.LoadMap = append(game.LoadMap, data)
+}

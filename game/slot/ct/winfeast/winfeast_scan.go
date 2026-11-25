@@ -1,0 +1,19 @@
+package winfeast
+
+import (
+	"context"
+	"io"
+
+	"github.com/slotopol/server/game/slot"
+)
+
+func CalcStat(ctx context.Context, sp *slot.ScanPar) (float64, float64) {
+	var g = NewGame()
+	var s = slot.NewStatSnap(slot.FallLimit, sn, 5, 2, 0)
+
+	var calc = func(w io.Writer) (float64, float64) {
+		return slot.Parsheet_simple(w, sp, s, g.Cost())
+	}
+
+	return slot.ScanReels(ctx, sp, s, g, calc)
+}
